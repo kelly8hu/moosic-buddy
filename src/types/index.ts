@@ -21,6 +21,8 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   difficultyLevel?: '7' | '10' | '13';
+  followUpQuestions?: string[];
+  keyboardChallenge?: KeyboardChallenge;
 }
 
 export interface AITutorResponse {

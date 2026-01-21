@@ -62,7 +62,14 @@ export class StorageService {
   static async getChatHistory(): Promise<ChatMessage[]> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.CHAT_HISTORY);
-      return data ? JSON.parse(data) : [];
+      if (!data) return [];
+      
+      const parsed = JSON.parse(data);
+      // Convert timestamp strings back to Date objects
+      return parsed.map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp),
+      }));
     } catch (error) {
       console.error('Error getting chat history:', error);
       return [];
@@ -74,7 +81,14 @@ export class StorageService {
    */
   static async saveChatHistory(messages: ChatMessage[]): Promise<void> {
     try {
-      await AsyncStorage.setItem(STORAGE_KEYS.CHAT_HISTORY, JSON.stringify(messages));
+      // Convert Date objects to ISO strings for storage
+      const serialized = messages.map(msg => ({
+        ...msg,
+        timestamp: msg.timestamp instanceof Date 
+          ? msg.timestamp.toISOString() 
+          : msg.timestamp,
+      }));
+      await AsyncStorage.setItem(STORAGE_KEYS.CHAT_HISTORY, JSON.stringify(serialized));
     } catch (error) {
       console.error('Error saving chat history:', error);
     }
