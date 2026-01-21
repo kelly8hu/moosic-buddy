@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Platform, Linking, Alert } from 'react-native';
+import { Linking, Alert } from 'react-native';
 import { VoiceService } from '../services/voiceService';
-import * as Speech from 'expo-speech';
 
 export interface UseVoiceInputReturn {
   isRecording: boolean;
@@ -43,7 +42,14 @@ export function useVoiceInput(): UseVoiceInputReturn {
       // Check availability
       const isAvailable = await VoiceService.isAvailable();
       if (!isAvailable) {
-        throw new Error('Speech recognition is not available');
+        const errorMsg = 'Voice input is not available in Expo Go. Please create a development build to enable voice input.';
+        setError(errorMsg);
+        Alert.alert(
+          'Voice Input Unavailable',
+          errorMsg,
+          [{ text: 'OK' }]
+        );
+        return;
       }
 
       // Request permission

@@ -1,4 +1,11 @@
-import Voice from '@react-native-voice/voice';
+// Conditionally import Voice module (not available in Expo Go)
+let Voice: any = null;
+try {
+  Voice = require('@react-native-voice/voice');
+} catch (e) {
+  // Voice module not available in Expo Go - voice input will be disabled
+  console.warn('Voice module not available - voice input disabled. Create a development build to enable voice input.');
+}
 
 export interface VoiceRecognitionResult {
   text: string;
@@ -14,9 +21,20 @@ export class VoiceService {
   } = {};
 
   /**
+   * Check if Voice module is available
+   */
+  private static isVoiceModuleAvailable(): boolean {
+    return Voice !== null;
+  }
+
+  /**
    * Initialize the voice service
    */
   static async initialize(): Promise<void> {
+    if (!this.isVoiceModuleAvailable()) {
+      throw new Error('Voice recognition is not available in Expo Go. Please create a development build to enable voice input.');
+    }
+
     if (this.isInitialized) return;
 
     try {
@@ -25,7 +43,7 @@ export class VoiceService {
         console.log('Speech recognition started');
       };
 
-      Voice.onSpeechResults = (e) => {
+      Voice.onSpeechResults = (e: { value?: string[] }) => {
         if (e.value && e.value.length > 0) {
           this.recognitionCallbacks.onResult?.({
             text: e.value[0],
@@ -34,7 +52,7 @@ export class VoiceService {
         }
       };
 
-      Voice.onSpeechPartialResults = (e) => {
+      Voice.onSpeechPartialResults = (e: { value?: string[] }) => {
         if (e.value && e.value.length > 0) {
           this.recognitionCallbacks.onResult?.({
             text: e.value[0],
@@ -43,7 +61,7 @@ export class VoiceService {
         }
       };
 
-      Voice.onSpeechError = (e) => {
+      Voice.onSpeechError = (e: { error?: { message?: string } }) => {
         const error = new Error(e.error?.message || 'Speech recognition failed');
         this.recognitionCallbacks.onError?.(error);
       };
@@ -63,6 +81,10 @@ export class VoiceService {
    * Check if speech recognition is available
    */
   static async isAvailable(): Promise<boolean> {
+    if (!this.isVoiceModuleAvailable()) {
+      return false;
+    }
+
     try {
       await this.initialize();
       
@@ -80,6 +102,10 @@ export class VoiceService {
    * Request microphone permission
    */
   static async requestPermission(): Promise<boolean> {
+    if (!this.isVoiceModuleAvailable()) {
+      return false;
+    }
+
     try {
       await this.initialize();
 
@@ -104,6 +130,12 @@ export class VoiceService {
       onEnd?: () => void;
     }
   ): Promise<void> {
+    if (!this.isVoiceModuleAvailable()) {
+      const error = new Error('Voice recognition is not available in Expo Go. Please create a development build to enable voice input.');
+      callbacks.onError?.(error);
+      throw error;
+    }
+
     try {
       await this.initialize();
       this.recognitionCallbacks = callbacks;
@@ -123,6 +155,10 @@ export class VoiceService {
    * Stop voice recognition
    */
   static async stopRecognition(): Promise<void> {
+    if (!this.isVoiceModuleAvailable()) {
+      return;
+    }
+
     try {
       await Voice.stop();
       this.recognitionCallbacks = {};
@@ -135,6 +171,10 @@ export class VoiceService {
    * Cancel voice recognition
    */
   static async cancelRecognition(): Promise<void> {
+    if (!this.isVoiceModuleAvailable()) {
+      return;
+    }
+
     try {
       await Voice.cancel();
       this.recognitionCallbacks = {};

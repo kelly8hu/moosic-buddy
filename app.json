@@ -4,6 +4,7 @@
     "slug": "moosic-buddy",
     "version": "1.0.0",
     "orientation": "portrait",
+    "scheme": "moosic-buddy",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
